@@ -1,0 +1,78 @@
+#define USE_ARDUINO_INTERRUPTS true
+#include<PulseSensorPlayground.h>
+#include<LiquidCrystal.h>
+#include<DHT.h>
+#include<DHT_U.h>
+
+#define BUZZER_PIN 2
+#define DHT_PIN 3
+#define DHT_TYPE DHT11
+#define PULSE_PIN A0
+#define PULSE_THRES 550
+DHT dht(DHT_PIN, DHT_TYPE);
+LiquidCrystal lcd(6, 7, 8, 9, 10, 11);
+PulseSensorPlayground pulseSensor;
+
+
+void setup() {
+  lcd.begin(16, 2);
+  dht.begin();
+  pinMode(BUZZER_PIN, OUTPUT);
+  Serial.begin(9600);
+  pulseSensor.analogInput(PULSE_PIN);
+  pulseSensor.blinkOnPulse(4);
+  pulseSensor.setThreshold(PULSE_THRES);
+  pulseSensor.begin();
+//   if (pulseSensor.begin()) {
+// Serial.println("We created a pulseSensor Object !"); //This prints one time at Arduino power-up, or on Arduino reset.
+// }
+}
+
+void loop() {
+  // lcd.setCursor(0,0);
+  delay(500);
+  heartBeat();
+  readHumidity();
+}
+
+void heartBeat(){
+  int myBPM = pulseSensor.getBeatsPerMinute();
+  if (pulseSensor.sawStartOfBeat()) { // Constantly test to see if "a beat happened".
+  //Serial.println("♥ A HeartBeat Happened ! "); // If test is "true", print a message "a heartbeat happened".
+  Serial.print("BPM: "); // Print phrase "BPM: "
+  Serial.println((myBPM/4)+10); // Print the value inside of myBPM.
+  // lcd.clear();
+  lcd.setCursor(0, 1);
+  lcd.print("BPM: ");
+  lcd.print((myBPM/4)+10);
+  }
+}
+
+
+void readHumidity(){
+  float h = dht.readHumidity();
+  float tempC = dht.readTemperature();
+  float tempF = dht.readTemperature(true);
+  // lcd.clear();
+  // lcd.setCursor(0, 0);
+  // lcd.print("TEMP: ");
+  // lcd.print(tempC);
+  // lcd.print(" C | ");
+
+  lcd.setCursor(0, 0);
+  lcd.print("TEMP: ");
+  lcd.print(tempF);
+  lcd.print(" F");
+  if(tempF > 100){
+    alert(100);
+  }
+}
+
+void alert(int delayTime){
+  tone(BUZZER_PIN, 1000); // Send 1KHz sound signal...
+  delay(delayTime);        // ...for 1 sec
+  noTone(BUZZER_PIN);     // Stop sound...
+  delay(delayTime);
+}
+
+
